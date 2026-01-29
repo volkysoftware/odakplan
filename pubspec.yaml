@@ -59,7 +59,7 @@ dev_dependencies:
 flutter_launcher_icons:
   ios: true
   android: true
-  image_path: "assets/icon/app_icon_512.png"
+  image_path: assets/icon/odakplan_icon_1024.png
   remove_alpha_ios: true
 
 
