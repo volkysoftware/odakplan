@@ -10,6 +10,7 @@ import 'state/focus_timer_controller.dart';
 import 'widgets/session_complete_sheet.dart';
 import 'widgets/focus_start_ritual.dart';
 import 'widgets/post_focus_suggestion_sheet.dart';
+import 'focus_fullscreen_page.dart';
 
 class FocusPage extends ConsumerStatefulWidget {
   const FocusPage({super.key});
@@ -312,6 +313,21 @@ class _FocusPageState extends ConsumerState<FocusPage> {
         ),
         centerTitle: true,
         actions: [
+          IconButton(
+            tooltip: 'Tam ekran modu',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const FocusFullscreenPage(),
+                  fullscreenDialog: false,
+                ),
+              );
+            },
+            icon: Icon(
+              Icons.fullscreen_rounded,
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+            ),
+          ),
           IconButton(
             tooltip: timer.isBreak ? 'Çalışma moduna geç' : 'Mola moduna geç',
             onPressed: () async {
