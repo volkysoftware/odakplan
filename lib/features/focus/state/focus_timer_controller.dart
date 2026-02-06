@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:odakplan/app/notifications/notification_service.dart';
+import 'package:odakplan/app/state/settings_state.dart';
 
 class FocusTimerState {
   final bool isRunning;
@@ -52,17 +53,32 @@ final focusTimerProvider =
 });
 
 class FocusTimerController extends StateNotifier<FocusTimerState> {
-  FocusTimerController(this.ref)
-      : super(const FocusTimerState(
-          isRunning: false,
-          isBreak: false,
-          workMinutes: 25,
-          breakMinutes: 5,
-          sessionTotalSeconds: 25 * 60,
-          remainingSeconds: 25 * 60,
-        ));
+  FocusTimerController(this.ref) : super(_initialState(ref)) {
+    // Listen to break minutes changes and update state
+    ref.listen<int>(breakMinutesProvider, (previous, next) {
+      if (previous != next) {
+        state = state.copyWith(breakMinutes: next);
+        // If currently in break mode and not running, update the session duration
+        if (state.isBreak && !state.isRunning) {
+          applyMode(isBreak: true);
+        }
+      }
+    });
+  }
 
   final Ref ref;
+
+  static FocusTimerState _initialState(Ref ref) {
+    final breakMinutes = ref.read(breakMinutesProvider);
+    return FocusTimerState(
+      isRunning: false,
+      isBreak: false,
+      workMinutes: 25,
+      breakMinutes: breakMinutes,
+      sessionTotalSeconds: 25 * 60,
+      remainingSeconds: 25 * 60,
+    );
+  }
 
   Timer? _ticker;
   DateTime? _endAt;

@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:riverpod/riverpod.dart';
 
 import 'package:odakplan/app/state/selection_state.dart';
 import 'package:odakplan/app/state/history_state.dart';
 import 'package:odakplan/app/state/streak_state.dart';
+import 'package:odakplan/app/state/settings_state.dart';
 
 import 'state/focus_timer_controller.dart';
 import 'widgets/session_complete_sheet.dart';
+// Add a provider that reads the "dailyTarget" value from Hive and falls back to 120 if not found.
+// No need for custom dailyTargetProvider here, read from the global one.
+// (Delete this entire section. Use the app/state/settings_state.dart provider.)
 
 class FocusPage extends ConsumerStatefulWidget {
   const FocusPage({super.key});
@@ -17,14 +20,13 @@ class FocusPage extends ConsumerStatefulWidget {
 }
 
 class _FocusPageState extends ConsumerState<FocusPage> {
-  ProviderSubscription<int?>? _planMinutesSub;
-  ProviderSubscription<FocusTimerState>? _timerFinishSub;
+  late final _planMinutesSub;
+  late final _timerFinishSub;
 
   @override
   void initState() {
     super.initState();
 
-    // ✅ İlk kurulum: provider'ı build sırasında değil, build bittikten sonra güncelle
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
 
@@ -42,7 +44,7 @@ class _FocusPageState extends ConsumerState<FocusPage> {
       }
     });
 
-    // ✅ Plan dakikası değişince Odak süresini güncelle
+    // Plan dakikası değişince Odak süresini güncelle
     _planMinutesSub = ref.listenManual<int?>(
       selectedPlanMinutesProvider,
       (prev, next) {
@@ -55,7 +57,7 @@ class _FocusPageState extends ConsumerState<FocusPage> {
       },
     );
 
-    // ✅ Timer 0’a düşünce (oturum bitince) sheet + dakika ekleme
+    // Timer 0’a düşünce (oturum bitince) sheet + dakika ekleme
     _timerFinishSub = ref.listenManual<FocusTimerState>(
       focusTimerProvider,
       (prev, next) {
@@ -98,14 +100,14 @@ class _FocusPageState extends ConsumerState<FocusPage> {
     return 0;
   }
 
-  // ✅ (1) Anlık toplam için: timer çalışırken ekranda canlı dakika ekini göster
+  // (1) Anlık toplam için: timer çalışırken ekranda canlı dakika ekini göster
   int _liveAddedMinutes(FocusTimerState timer) {
     if (timer.isBreak) return 0;
     if (!timer.isRunning) return 0;
     return timer.workedSeconds ~/ 60; // floor
   }
 
-  // ✅ (2) Tamamladım: yarım da olsa bugüne ekle
+  // (2) Tamamladım: yarım da olsa bugüne ekle
   Future<void> _completeEarly() async {
     final timer = ref.read(focusTimerProvider);
     final ctrl = ref.read(focusTimerProvider.notifier);
@@ -129,7 +131,7 @@ class _FocusPageState extends ConsumerState<FocusPage> {
       await ref.read(streakProvider.notifier).onMinutesAdded(
             workedMinutes: addedMinutes,
             todayTotalMinutes: todayBefore + addedMinutes,
-            dailyTargetMinutes: 120,
+            dailyTargetMinutes: ref.watch(dailyTargetProvider),
           );
     } catch (_) {}
 
@@ -233,15 +235,39 @@ class _FocusPageState extends ConsumerState<FocusPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Odak'),
+        title: Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: Text(
+            'Odak',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.bold,
+              fontSize: 26,
+              letterSpacing: -.5,
+            ),
+          ),
+        ),
         centerTitle: true,
         actions: [
           IconButton(
-            tooltip: 'Mod değiştir',
+            tooltip: timer.isBreak ? 'Çalışma moduna geç' : 'Mola moduna geç',
             onPressed: () async {
               await ctrl.applyMode(isBreak: !timer.isBreak);
             },
-            icon: const Icon(Icons.swap_horiz_rounded),
+            icon: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 350),
+              transitionBuilder: (child, anim) => FadeTransition(
+                opacity: anim,
+                child: ScaleTransition(scale: anim, child: child),
+              ),
+              child: Icon(
+                Icons.swap_horiz_rounded,
+                key: ValueKey(timer.isBreak),
+                color: timer.isBreak
+                    ? Theme.of(context).colorScheme.tertiary
+                    : Theme.of(context).colorScheme.primary,
+                size: 28,
+              ),
+            ),
           ),
         ],
       ),

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 import 'package:odakplan/app/notifications/notification_service.dart';
+import 'package:odakplan/app/state/settings_state.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -13,6 +15,7 @@ class _SettingsPageState extends State<SettingsPage> {
   static const _boxName = 'op_settings';
 
   static const _kThemeMode = 'theme_mode'; // system/light/dark
+  static const _kSoftTheme = 'soft_theme'; // bool
   static const _kReminderEnabled = 'reminder_enabled';
   static const _kReminderHour = 'reminder_hour';
   static const _kReminderMinute = 'reminder_minute';
@@ -23,6 +26,7 @@ class _SettingsPageState extends State<SettingsPage> {
   bool _loading = true;
 
   ThemeMode _themeMode = ThemeMode.system;
+  bool _softTheme = false;
   bool _reminderEnabled = false;
   TimeOfDay _reminderTime = const TimeOfDay(hour: 20, minute: 0);
   Set<int> _days = {1, 2, 3, 4, 5};
@@ -44,6 +48,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
       _themeMode =
           _decodeThemeMode(_box!.get(_kThemeMode, defaultValue: 'system'));
+      _softTheme = _box!.get(_kSoftTheme, defaultValue: false) as bool;
       _reminderEnabled =
           _box!.get(_kReminderEnabled, defaultValue: false) as bool;
 
@@ -75,6 +80,12 @@ class _SettingsPageState extends State<SettingsPage> {
   Future<void> _saveThemeMode(ThemeMode mode) async {
     _themeMode = mode;
     await _box?.put(_kThemeMode, _encodeThemeMode(mode));
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _saveSoftTheme(bool value) async {
+    _softTheme = value;
+    await _box?.put(_kSoftTheme, value);
     if (mounted) setState(() {});
   }
 
@@ -160,6 +171,7 @@ class _SettingsPageState extends State<SettingsPage> {
           children: [
             _HeaderCard(
               themeMode: _themeMode,
+              softTheme: _softTheme,
               reminderEnabled: _reminderEnabled,
               reminderTime: _reminderTime,
             ),
@@ -167,7 +179,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
             _sectionTitle(context, 'Görünüm'),
             const SizedBox(height: 8),
-            _PremiumCard(
+            _SettingsCard(
               child: Column(
                 children: [
                   ListTile(
@@ -193,12 +205,20 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                   ),
                   const Divider(height: 1),
-                  _PremiumTile(
+                  _SettingsSwitchTile(
+                    icon: Icons.tonality_outlined,
+                    title: 'Soft Tema',
+                    subtitle: 'Göz yormayan, yumuşak renkler',
+                    value: _softTheme,
+                    onChanged: _saveSoftTheme,
+                  ),
+                  const Divider(height: 1),
+                  _SettingsTile(
                     icon: Icons.text_fields_outlined,
                     title: 'Arayüz yoğunluğu',
                     subtitle: 'Sade ve ferah görünüm',
-                    trailing: const _Pill(text: 'Premium'),
-                    onTap: () => _snack(context, 'Arayüz sadeleştirme zaten aktif ✅'),
+                    onTap: () =>
+                        _snack(context, 'Arayüz sadeleştirme zaten aktif ✅'),
                   ),
                 ],
               ),
@@ -207,10 +227,10 @@ class _SettingsPageState extends State<SettingsPage> {
             const SizedBox(height: 16),
             _sectionTitle(context, 'Bildirimler'),
             const SizedBox(height: 8),
-            _PremiumCard(
+            _SettingsCard(
               child: Column(
                 children: [
-                  _PremiumSwitchTile(
+                  _SettingsSwitchTile(
                     icon: Icons.notifications_active_outlined,
                     title: 'Günlük hatırlatıcı',
                     subtitle: _reminderEnabled
@@ -222,7 +242,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   const Divider(height: 1),
 
                   // ✅ KRİTİK: Saat seçimi her zaman aktif (kapalıyken de seçilebilir)
-                  _PremiumTile(
+                  _SettingsTile(
                     icon: Icons.schedule_outlined,
                     title: 'Bildirim saati',
                     subtitle: _reminderEnabled
@@ -239,7 +259,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   ),
 
                   const Divider(height: 1),
-                  _PremiumTile(
+                  _SettingsTile(
                     icon: Icons.date_range_outlined,
                     title: 'Gün seçimi',
                     subtitle: 'Hangi günlerde hatırlatsın?',
@@ -254,7 +274,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     },
                   ),
                   const Divider(height: 1),
-                  _PremiumTile(
+                  _SettingsTile(
                     icon: Icons.auto_awesome_outlined,
                     title: 'Mesaj stili',
                     subtitle: _styleName(_styleIndex),
@@ -273,12 +293,17 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
 
             const SizedBox(height: 16),
+            _sectionTitle(context, 'Odak'),
+            const SizedBox(height: 8),
+            _BreakDurationCard(),
+
+            const SizedBox(height: 16),
             _sectionTitle(context, 'Veri ve Güvenlik'),
             const SizedBox(height: 8),
-            _PremiumCard(
+            _SettingsCard(
               child: Column(
                 children: [
-                  _PremiumTile(
+                  _SettingsTile(
                     icon: Icons.restart_alt_outlined,
                     title: 'Ayarları sıfırla',
                     subtitle: 'Tema ve bildirim ayarlarını sıfırlar',
@@ -286,7 +311,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     onTap: () => _confirmReset(context),
                   ),
                   const Divider(height: 1),
-                  _PremiumTile(
+                  _SettingsTile(
                     icon: Icons.info_outline,
                     title: 'Sürüm',
                     subtitle: 'OdakPlan • yerel depolama',
@@ -300,7 +325,7 @@ class _SettingsPageState extends State<SettingsPage> {
             const SizedBox(height: 18),
             Center(
               child: Text(
-                'Premium görünüm • Sade • Hızlı',
+                'Sade • Hızlı',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Theme.of(context)
                           .textTheme
@@ -336,6 +361,7 @@ class _SettingsPageState extends State<SettingsPage> {
     if (ok != true) return;
 
     await _box?.put(_kThemeMode, 'system');
+    await _box?.put(_kSoftTheme, false);
     await _box?.put(_kReminderEnabled, false);
     await _box?.put(_kReminderHour, 20);
     await _box?.put(_kReminderMinute, 0);
@@ -345,6 +371,7 @@ class _SettingsPageState extends State<SettingsPage> {
     await NotificationService.instance.cancelDailyReminder();
 
     _themeMode = ThemeMode.system;
+    _softTheme = false;
     _reminderEnabled = false;
     _reminderTime = const TimeOfDay(hour: 20, minute: 0);
     _days = {1, 2, 3, 4, 5};
@@ -420,11 +447,13 @@ class _SettingsPageState extends State<SettingsPage> {
 
 class _HeaderCard extends StatelessWidget {
   final ThemeMode themeMode;
+  final bool softTheme;
   final bool reminderEnabled;
   final TimeOfDay reminderTime;
 
   const _HeaderCard({
     required this.themeMode,
+    required this.softTheme,
     required this.reminderEnabled,
     required this.reminderTime,
   });
@@ -438,6 +467,8 @@ class _HeaderCard extends StatelessWidget {
     };
 
     final remindText = reminderEnabled ? reminderTime.format(context) : 'Kapalı';
+
+    final themeLabel = softTheme ? '$modeText • Soft' : modeText;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -468,7 +499,7 @@ class _HeaderCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Tema: $modeText • Bildirim: $remindText',
+                  'Tema: $themeLabel • Bildirim: $remindText',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(.75),
                       ),
@@ -476,16 +507,15 @@ class _HeaderCard extends StatelessWidget {
               ],
             ),
           ),
-          const _Pill(text: 'PRO'),
         ],
       ),
     );
   }
 }
 
-class _PremiumCard extends StatelessWidget {
+class _SettingsCard extends StatelessWidget {
   final Widget child;
-  const _PremiumCard({required this.child});
+  const _SettingsCard({required this.child});
 
   @override
   Widget build(BuildContext context) {
@@ -501,7 +531,7 @@ class _PremiumCard extends StatelessWidget {
   }
 }
 
-class _PremiumTile extends StatelessWidget {
+class _SettingsTile extends StatelessWidget {
   final IconData icon;
   final String title;
   final String subtitle;
@@ -509,7 +539,7 @@ class _PremiumTile extends StatelessWidget {
   final VoidCallback? onTap;
   final bool enabled;
 
-  const _PremiumTile({
+  const _SettingsTile({
     required this.icon,
     required this.title,
     required this.subtitle,
@@ -533,14 +563,14 @@ class _PremiumTile extends StatelessWidget {
   }
 }
 
-class _PremiumSwitchTile extends StatelessWidget {
+class _SettingsSwitchTile extends StatelessWidget {
   final IconData icon;
   final String title;
   final String subtitle;
   final bool value;
   final ValueChanged<bool> onChanged;
 
-  const _PremiumSwitchTile({
+  const _SettingsSwitchTile({
     required this.icon,
     required this.title,
     required this.subtitle,
@@ -751,6 +781,87 @@ class _StylePickerSheet extends StatelessWidget {
                 trailing: selected == i ? const Icon(Icons.check_circle) : null,
                 onTap: () => Navigator.pop(context, i),
               ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _BreakDurationCard extends ConsumerWidget {
+  const _BreakDurationCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final breakMinutes = ref.watch(breakMinutesProvider);
+
+    return _SettingsCard(
+      child: _SettingsTile(
+        icon: Icons.timer_outlined,
+        title: 'Mola süresi',
+        subtitle: 'Mola modunda kullanılacak süre',
+        trailing: _Pill(text: '$breakMinutes dk'),
+        onTap: () async {
+          final result = await showModalBottomSheet<int>(
+            context: context,
+            showDragHandle: true,
+            builder: (_) => _BreakDurationPickerSheet(selected: breakMinutes),
+          );
+          if (result != null) {
+            ref.read(breakMinutesProvider.notifier).setBreakMinutes(result);
+          }
+        },
+      ),
+    );
+  }
+}
+
+class _BreakDurationPickerSheet extends StatelessWidget {
+  final int selected;
+  const _BreakDurationPickerSheet({required this.selected});
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              children: [
+                Text(
+                  'Mola süresi',
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleMedium
+                      ?.copyWith(fontWeight: FontWeight.w900),
+                ),
+                const Spacer(),
+              ],
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              height: 300,
+              child: ListView.builder(
+                itemCount: 30,
+                itemBuilder: (context, index) {
+                  final minutes = index + 1;
+                  final isSelected = minutes == selected;
+                  return ListTile(
+                    title: Text(
+                      '$minutes dk',
+                      style: TextStyle(
+                        fontWeight: isSelected ? FontWeight.w900 : FontWeight.normal,
+                      ),
+                    ),
+                    trailing: isSelected ? const Icon(Icons.check_circle) : null,
+                    onTap: () => Navigator.pop(context, minutes),
+                  );
+                },
+              ),
+            ),
             const SizedBox(height: 8),
           ],
         ),
