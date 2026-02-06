@@ -298,6 +298,8 @@ class _SettingsPageState extends State<SettingsPage> {
             _BreakDurationCard(),
             const SizedBox(height: 8),
             _FocusRitualCard(),
+            const SizedBox(height: 8),
+            _PostFocusSuggestionsCard(),
 
             const SizedBox(height: 16),
             _sectionTitle(context, 'Veri ve Güvenlik'),
@@ -887,6 +889,27 @@ class _FocusRitualCard extends ConsumerWidget {
         value: ritualEnabled,
         onChanged: (value) {
           ref.read(focusRitualEnabledProvider.notifier).setEnabled(value);
+        },
+      ),
+    );
+  }
+}
+
+class _PostFocusSuggestionsCard extends ConsumerWidget {
+  const _PostFocusSuggestionsCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final suggestionsEnabled = ref.watch(postFocusSuggestionsEnabledProvider);
+
+    return _SettingsCard(
+      child: _SettingsSwitchTile(
+        icon: Icons.lightbulb_outline,
+        title: 'Odak Sonu Önerileri',
+        subtitle: 'Seans sonrası kısa öneriler göster',
+        value: suggestionsEnabled,
+        onChanged: (value) {
+          ref.read(postFocusSuggestionsEnabledProvider.notifier).setEnabled(value);
         },
       ),
     );

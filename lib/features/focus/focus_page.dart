@@ -9,6 +9,7 @@ import 'package:odakplan/app/state/settings_state.dart';
 import 'state/focus_timer_controller.dart';
 import 'widgets/session_complete_sheet.dart';
 import 'widgets/focus_start_ritual.dart';
+import 'widgets/post_focus_suggestion_sheet.dart';
 
 class FocusPage extends ConsumerStatefulWidget {
   const FocusPage({super.key});
@@ -140,6 +141,9 @@ class _FocusPageState extends ConsumerState<FocusPage> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Eklendi: $addedMinutes dk ✅')),
     );
+
+    // Show post-focus suggestion if enabled
+    await _showPostFocusSuggestionIfEnabled(context, ref);
   }
 
   Future<void> _onSessionFinished() async {
@@ -204,6 +208,32 @@ class _FocusPageState extends ConsumerState<FocusPage> {
     } else {
       await ctrl.applyMode(isBreak: !timer.isBreak);
     }
+
+    // Show post-focus suggestion if enabled (only for work sessions)
+    if (!timer.isBreak) {
+      await _showPostFocusSuggestionIfEnabled(context, ref);
+    }
+  }
+
+  Future<void> _showPostFocusSuggestionIfEnabled(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    final suggestionsEnabled = ref.read(postFocusSuggestionsEnabledProvider);
+    if (!suggestionsEnabled || !mounted) return;
+
+    await Future.delayed(const Duration(milliseconds: 300)); // Small delay after completion sheet
+
+    if (!mounted) return;
+
+    await showModalBottomSheet(
+      context: context,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+      ),
+      builder: (_) => const PostFocusSuggestionSheet(),
+    );
   }
 
   Future<void> _handleStart(

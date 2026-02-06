@@ -1,10 +1,11 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 
+/// Simple bottom sheet showing a random post-focus suggestion
 class PostFocusSuggestionSheet extends StatelessWidget {
   const PostFocusSuggestionSheet({super.key});
 
-  static const _suggestions = [
+  static final List<String> _suggestions = [
     'Kısa bir mola ver ve ayağa kalk',
     'Bir bardak su iç',
     'Gözlerini 20 saniye dinlendir',
@@ -37,66 +38,40 @@ class PostFocusSuggestionSheet extends StatelessWidget {
                 borderRadius: BorderRadius.circular(99),
               ),
             ),
-            const SizedBox(height: 14),
-            TweenAnimationBuilder<double>(
-              tween: Tween(begin: 0.9, end: 1.0),
-              duration: const Duration(milliseconds: 420),
-              curve: Curves.easeOutBack,
-              builder: (context, value, child) {
-                return Opacity(
-                  opacity: value.clamp(0.0, 1.0),
-                  child: Transform.scale(
-                    scale: value,
-                    child: child,
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primaryContainer,
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                );
-              },
-              child: Row(
-                children: [
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primaryContainer,
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: Icon(
-                      Icons.lightbulb_outline_rounded,
-                      color: theme.colorScheme.onPrimaryContainer,
+                  child: Icon(
+                    Icons.lightbulb_outline,
+                    color: theme.colorScheme.onPrimaryContainer,
+                    size: 22,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    suggestion,
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      height: 1.4,
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Öneri',
-                          style: theme.textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          suggestion,
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 16),
             SizedBox(
               width: double.infinity,
-              child: FilledButton.icon(
-                onPressed: () => Navigator.pop(context),
-                icon: const Icon(Icons.check_rounded),
-                label: const Text('Tamam'),
+              child: FilledButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Tamam'),
               ),
             ),
             const SizedBox(height: 8),

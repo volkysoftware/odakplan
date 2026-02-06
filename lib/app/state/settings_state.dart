@@ -70,3 +70,26 @@ class FocusRitualEnabledNotifier extends StateNotifier<bool> {
     _box.put(_key, value);
   }
 }
+
+final postFocusSuggestionsEnabledProvider =
+    StateNotifierProvider<PostFocusSuggestionsEnabledNotifier, bool>((ref) {
+  return PostFocusSuggestionsEnabledNotifier();
+});
+
+class PostFocusSuggestionsEnabledNotifier extends StateNotifier<bool> {
+  PostFocusSuggestionsEnabledNotifier() : super(true) {
+    _load();
+  }
+
+  final Box<dynamic> _box = Hive.box<dynamic>('op_settings');
+  static const _key = 'post_focus_suggestions_enabled';
+
+  void _load() {
+    state = _box.get(_key, defaultValue: true) as bool? ?? true;
+  }
+
+  void setEnabled(bool value) {
+    state = value;
+    _box.put(_key, value);
+  }
+}
