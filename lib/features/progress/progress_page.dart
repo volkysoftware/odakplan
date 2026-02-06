@@ -1,6 +1,7 @@
 // lib/features/progress/progress_page.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import 'package:odakplan/app/state/history_state.dart';
 import 'package:odakplan/app/state/streak_state.dart';
@@ -37,6 +38,13 @@ class ProgressPage extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('İlerleme'),
         centerTitle: true,
+        actions: [
+          IconButton(
+            tooltip: 'Rozetler',
+            onPressed: () => context.push('/achievements'),
+            icon: const Icon(Icons.emoji_events_rounded),
+          ),
+        ],
       ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),

@@ -6,6 +6,7 @@ import '../features/focus/focus_page.dart';
 import '../features/progress/progress_page.dart';
 import '../features/settings/settings_page.dart';
 import '../features/today/today_page.dart';
+import '../features/achievements/achievements_page.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -53,6 +54,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             ],
           ),
         ],
+      ),
+      // Achievements page (nested route)
+      GoRoute(
+        path: '/achievements',
+        pageBuilder: (context, state) =>
+            const NoTransitionPage(child: AchievementsPage()),
       ),
     ],
   );
