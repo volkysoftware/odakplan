@@ -294,14 +294,6 @@ class _SettingsPageState extends State<SettingsPage> {
               child: Column(
                 children: [
                   _SettingsTile(
-                    icon: Icons.restart_alt_outlined,
-                    title: 'Ayarları sıfırla',
-                    subtitle: 'Tema ve bildirim ayarlarını sıfırlar',
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () => _confirmReset(context),
-                  ),
-                  const Divider(height: 1),
-                  _SettingsTile(
                     icon: Icons.info_outline,
                     title: 'Sürüm',
                     subtitle: 'OdakPlan • yerel depolama',
@@ -343,45 +335,6 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
       ),
     );
-  }
-
-  Future<void> _confirmReset(BuildContext context) async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Ayarları sıfırla?'),
-        content: const Text('Tema ve bildirim tercihleri varsayılanlara dönecek.'),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Vazgeç')),
-          FilledButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('Sıfırla')),
-        ],
-      ),
-    );
-
-    if (ok != true) return;
-
-    await _box?.put(_kThemeMode, 'system');
-    await _box?.put('soft_theme', false);
-    await _box?.put(_kReminderEnabled, false);
-    await _box?.put(_kReminderHour, 20);
-    await _box?.put(_kReminderMinute, 0);
-    await _box?.put(_kReminderDays, <int>[1, 2, 3, 4, 5]);
-    await _box?.put(_kReminderStyle, 1);
-
-    await NotificationService.instance.cancelDailyReminder();
-
-    _themeMode = ThemeMode.system;
-    _reminderEnabled = false;
-    _reminderTime = const TimeOfDay(hour: 20, minute: 0);
-    _days = {1, 2, 3, 4, 5};
-    _styleIndex = 1;
-
-    if (mounted) setState(() {});
-    if (mounted) _snack(context, 'Ayarlar sıfırlandı ✅');
   }
 
   static Widget _sectionTitle(BuildContext context, String text) {
