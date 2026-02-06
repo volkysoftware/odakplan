@@ -4,6 +4,8 @@ import 'package:hive/hive.dart';
 import 'package:odakplan/app/notifications/notification_service.dart';
 import 'package:odakplan/app/state/settings_state.dart';
 
+import 'privacy_policy_page.dart';
+
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
 
@@ -305,6 +307,20 @@ class _SettingsPageState extends State<SettingsPage> {
                     subtitle: 'OdakPlan • yerel depolama',
                     trailing: const _Pill(text: 'v1'),
                     onTap: () => _snack(context, 'Yakında: yedekleme/dışa aktarma 💾'),
+                  ),
+                  const Divider(height: 1),
+                  _SettingsTile(
+                    icon: Icons.shield_outlined,
+                    title: 'Gizlilik Politikası',
+                    subtitle: 'Veri kullanımı ve gizlilik bilgileri',
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const PrivacyPolicyPage(),
+                        ),
+                      );
+                    },
                   ),
                 ],
               ),
