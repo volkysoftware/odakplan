@@ -93,3 +93,26 @@ class PostFocusSuggestionsEnabledNotifier extends StateNotifier<bool> {
     _box.put(_key, value);
   }
 }
+
+final softThemeProvider =
+    StateNotifierProvider<SoftThemeNotifier, bool>((ref) {
+  return SoftThemeNotifier();
+});
+
+class SoftThemeNotifier extends StateNotifier<bool> {
+  SoftThemeNotifier() : super(false) {
+    _load();
+  }
+
+  final Box<dynamic> _box = Hive.box<dynamic>('op_settings');
+  static const _key = 'soft_theme';
+
+  void _load() {
+    state = _box.get(_key, defaultValue: false) as bool? ?? false;
+  }
+
+  void setEnabled(bool value) {
+    state = value;
+    _box.put(_key, value);
+  }
+}

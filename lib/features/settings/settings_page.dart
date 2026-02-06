@@ -15,7 +15,6 @@ class _SettingsPageState extends State<SettingsPage> {
   static const _boxName = 'op_settings';
 
   static const _kThemeMode = 'theme_mode'; // system/light/dark
-  static const _kSoftTheme = 'soft_theme'; // bool
   static const _kReminderEnabled = 'reminder_enabled';
   static const _kReminderHour = 'reminder_hour';
   static const _kReminderMinute = 'reminder_minute';
@@ -26,7 +25,6 @@ class _SettingsPageState extends State<SettingsPage> {
   bool _loading = true;
 
   ThemeMode _themeMode = ThemeMode.system;
-  bool _softTheme = false;
   bool _reminderEnabled = false;
   TimeOfDay _reminderTime = const TimeOfDay(hour: 20, minute: 0);
   Set<int> _days = {1, 2, 3, 4, 5};
@@ -48,7 +46,6 @@ class _SettingsPageState extends State<SettingsPage> {
 
       _themeMode =
           _decodeThemeMode(_box!.get(_kThemeMode, defaultValue: 'system'));
-      _softTheme = _box!.get(_kSoftTheme, defaultValue: false) as bool;
       _reminderEnabled =
           _box!.get(_kReminderEnabled, defaultValue: false) as bool;
 
@@ -80,12 +77,6 @@ class _SettingsPageState extends State<SettingsPage> {
   Future<void> _saveThemeMode(ThemeMode mode) async {
     _themeMode = mode;
     await _box?.put(_kThemeMode, _encodeThemeMode(mode));
-    if (mounted) setState(() {});
-  }
-
-  Future<void> _saveSoftTheme(bool value) async {
-    _softTheme = value;
-    await _box?.put(_kSoftTheme, value);
     if (mounted) setState(() {});
   }
 
@@ -171,7 +162,6 @@ class _SettingsPageState extends State<SettingsPage> {
           children: [
             _HeaderCard(
               themeMode: _themeMode,
-              softTheme: _softTheme,
               reminderEnabled: _reminderEnabled,
               reminderTime: _reminderTime,
             ),
@@ -205,13 +195,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                   ),
                   const Divider(height: 1),
-                  _SettingsSwitchTile(
-                    icon: Icons.tonality_outlined,
-                    title: 'Soft Tema',
-                    subtitle: 'Göz yormayan, yumuşak renkler',
-                    value: _softTheme,
-                    onChanged: _saveSoftTheme,
-                  ),
+                  _SoftThemeCard(),
                   const Divider(height: 1),
                   _SettingsTile(
                     icon: Icons.text_fields_outlined,
@@ -365,7 +349,7 @@ class _SettingsPageState extends State<SettingsPage> {
     if (ok != true) return;
 
     await _box?.put(_kThemeMode, 'system');
-    await _box?.put(_kSoftTheme, false);
+    await _box?.put('soft_theme', false);
     await _box?.put(_kReminderEnabled, false);
     await _box?.put(_kReminderHour, 20);
     await _box?.put(_kReminderMinute, 0);
@@ -375,7 +359,6 @@ class _SettingsPageState extends State<SettingsPage> {
     await NotificationService.instance.cancelDailyReminder();
 
     _themeMode = ThemeMode.system;
-    _softTheme = false;
     _reminderEnabled = false;
     _reminderTime = const TimeOfDay(hour: 20, minute: 0);
     _days = {1, 2, 3, 4, 5};
@@ -449,21 +432,21 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 }
 
-class _HeaderCard extends StatelessWidget {
+class _HeaderCard extends ConsumerWidget {
   final ThemeMode themeMode;
-  final bool softTheme;
   final bool reminderEnabled;
   final TimeOfDay reminderTime;
 
   const _HeaderCard({
     required this.themeMode,
-    required this.softTheme,
     required this.reminderEnabled,
     required this.reminderTime,
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final softTheme = ref.watch(softThemeProvider);
+    
     final modeText = switch (themeMode) {
       ThemeMode.system => 'Sistem',
       ThemeMode.light => 'Açık',
@@ -910,6 +893,27 @@ class _PostFocusSuggestionsCard extends ConsumerWidget {
         value: suggestionsEnabled,
         onChanged: (value) {
           ref.read(postFocusSuggestionsEnabledProvider.notifier).setEnabled(value);
+        },
+      ),
+    );
+  }
+}
+
+class _SoftThemeCard extends ConsumerWidget {
+  const _SoftThemeCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final softThemeEnabled = ref.watch(softThemeProvider);
+
+    return _SettingsCard(
+      child: _SettingsSwitchTile(
+        icon: Icons.tonality_outlined,
+        title: 'Soft Tema',
+        subtitle: 'Göz yormayan yumuşak renkler',
+        value: softThemeEnabled,
+        onChanged: (value) {
+          ref.read(softThemeProvider.notifier).setEnabled(value);
         },
       ),
     );
