@@ -523,115 +523,131 @@ class _HeaderCard extends StatelessWidget {
         : '$todayTotal / $target dk';
 
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.fromLTRB(28, 28, 28, 24),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(28),
         border: Border.all(
-          color: theme.colorScheme.outlineVariant.withOpacity(0.5),
+          color: theme.colorScheme.outlineVariant.withOpacity(0.3),
           width: 1,
         ),
-        // Subtle gradient edge effect
+        // Subtle elevation
         boxShadow: [
           BoxShadow(
-            color: theme.colorScheme.primary.withOpacity(isDark ? 0.15 : 0.08),
-            blurRadius: 20,
-            offset: const Offset(0, 4),
+            color: theme.colorScheme.shadow.withOpacity(isDark ? 0.2 : 0.04),
+            blurRadius: 16,
+            offset: const Offset(0, 2),
             spreadRadius: 0,
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Stack(
         children: [
-          // Label
-          Text(
-            'Bugün Hedefin',
-            style: theme.textTheme.labelLarge?.copyWith(
-              fontWeight: FontWeight.w700,
-              color: theme.colorScheme.onSurfaceVariant.withOpacity(0.7),
-              letterSpacing: 0.3,
-            ),
-          ),
-          const SizedBox(height: 12),
-          
-          // Large headline number
-          Text(
-            headlineText,
-            style: TextStyle(
-              fontSize: 48,
-              fontWeight: FontWeight.w300,
-              height: 1.0,
-              color: theme.colorScheme.onSurface,
-              fontFeatures: const [
-                FontFeature('tnum'), // Tabular figures
-              ],
-              letterSpacing: -1.0,
-            ),
-          ),
-          const SizedBox(height: 16),
-          
-          // Minimal thin progress bar
-          ClipRRect(
-            borderRadius: BorderRadius.circular(2),
+          // Subtle inner glow accent (premium touch)
+          Positioned.fill(
             child: Container(
-              height: 3,
               decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(2),
-              ),
-              child: FractionallySizedBox(
-                alignment: Alignment.centerLeft,
-                widthFactor: progress.clamp(0.0, 1.0),
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        theme.colorScheme.primary,
-                        theme.colorScheme.primary.withOpacity(0.8),
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
+                borderRadius: BorderRadius.circular(28),
+                gradient: RadialGradient(
+                  center: Alignment.topLeft,
+                  radius: 1.5,
+                  colors: [
+                    theme.colorScheme.primary.withOpacity(0.03),
+                    Colors.transparent,
+                  ],
                 ),
               ),
             ),
           ),
-          const SizedBox(height: 12),
-          
-          // Status text
-          Text(
-            leftText,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant.withOpacity(0.8),
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 20),
-          
-          // Action buttons
-          Row(
+          // Content
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: onEditTarget,
-                  icon: const Icon(Icons.edit_rounded, size: 18),
-                  label: const Text('Hedef'),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
+              // Label (reduced visual noise)
+              Text(
+                'Bugün Hedefin',
+                style: theme.textTheme.labelMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: theme.colorScheme.onSurfaceVariant.withOpacity(0.6),
+                  letterSpacing: 0.2,
+                ),
+              ),
+              const SizedBox(height: 16),
+              
+              // Large headline number (clear focal point)
+              Text(
+                headlineText,
+                style: TextStyle(
+                  fontSize: 56,
+                  fontWeight: FontWeight.w400,
+                  height: 1.0,
+                  color: theme.colorScheme.onSurface,
+                  fontFeatures: const [
+                    FontFeature('tnum'), // Tabular figures
+                  ],
+                  letterSpacing: -1.5,
+                ),
+              ),
+              const SizedBox(height: 20),
+              
+              // Ultra-minimal progress bar (thinner, refined)
+              ClipRRect(
+                borderRadius: BorderRadius.circular(1.5),
+                child: Container(
+                  height: 2,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.6),
+                    borderRadius: BorderRadius.circular(1.5),
+                  ),
+                  child: FractionallySizedBox(
+                    alignment: Alignment.centerLeft,
+                    widthFactor: progress.clamp(0.0, 1.0),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primary,
+                        borderRadius: BorderRadius.circular(1.5),
+                      ),
+                    ),
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: FilledButton.icon(
-                  onPressed: onStartFocus,
-                  icon: const Icon(Icons.timer_rounded, size: 18),
-                  label: const Text('Odak'),
-                  style: FilledButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
+              const SizedBox(height: 16),
+              
+              // Status text (lighter, reduced noise)
+              Text(
+                leftText,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant.withOpacity(0.7),
+                  fontWeight: FontWeight.w500,
                 ),
+              ),
+              const SizedBox(height: 24),
+              
+              // Action buttons
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: onEditTarget,
+                      icon: const Icon(Icons.edit_rounded, size: 18),
+                      label: const Text('Hedef'),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: FilledButton.icon(
+                      onPressed: onStartFocus,
+                      icon: const Icon(Icons.timer_rounded, size: 18),
+                      label: const Text('Odak'),
+                      style: FilledButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

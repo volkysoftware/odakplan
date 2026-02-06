@@ -24,53 +24,50 @@ class PlanItemCard extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       onLongPress: onLongPress,
-      borderRadius: BorderRadius.circular(24),
+      borderRadius: BorderRadius.circular(18),
       child: Container(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
           color: selected
-              ? theme.colorScheme.primaryContainer.withOpacity(0.3)
+              ? theme.colorScheme.primaryContainer.withOpacity(0.2)
               : theme.colorScheme.surface,
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(18),
           border: Border.all(
             color: selected
-                ? theme.colorScheme.primary.withOpacity(0.2)
-                : theme.colorScheme.outlineVariant.withOpacity(0.3),
+                ? theme.colorScheme.primary.withOpacity(0.15)
+                : theme.colorScheme.outlineVariant.withOpacity(0.25),
             width: 1,
           ),
-          // Subtle elevation for depth
+          // Very subtle elevation
           boxShadow: [
             BoxShadow(
-              color: (selected
-                      ? theme.colorScheme.primary
-                      : theme.colorScheme.shadow)
-                  .withOpacity(isDark ? 0.15 : 0.06),
-              blurRadius: 12,
-              offset: const Offset(0, 2),
+              color: theme.colorScheme.shadow.withOpacity(isDark ? 0.08 : 0.03),
+              blurRadius: 8,
+              offset: const Offset(0, 1),
               spreadRadius: 0,
             ),
           ],
         ),
         child: Row(
           children: [
-            // Subtle side indicator for selected state
+            // Subtle side indicator for selected state (thinner, more refined)
             if (selected)
               Container(
-                width: 3,
-                height: 40,
+                width: 2,
+                height: 36,
                 decoration: BoxDecoration(
                   color: theme.colorScheme.primary,
-                  borderRadius: BorderRadius.circular(2),
+                  borderRadius: BorderRadius.circular(1),
                 ),
               ),
-            if (selected) const SizedBox(width: 16),
+            if (selected) const SizedBox(width: 12),
             
-            // Icon container
+            // Icon container (more compact)
             Container(
-              width: 52,
-              height: 52,
+              width: 44,
+              height: 44,
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(14),
                 color: selected
                     ? theme.colorScheme.primaryContainer
                     : theme.colorScheme.surfaceContainerHighest,
@@ -79,11 +76,11 @@ class PlanItemCard extends StatelessWidget {
                 selected ? Icons.check_circle_rounded : Icons.play_circle_outline_rounded,
                 color: selected
                     ? theme.colorScheme.onPrimaryContainer
-                    : theme.colorScheme.onSurfaceVariant.withOpacity(0.7),
-                size: 28,
+                    : theme.colorScheme.onSurfaceVariant.withOpacity(0.65),
+                size: 24,
               ),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 12),
             
             // Content
             Expanded(
@@ -91,48 +88,48 @@ class PlanItemCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Plan title
+                  // Plan title (smaller, refined weight)
                   Text(
                     title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w800,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
                       color: selected
                           ? theme.colorScheme.onPrimaryContainer
                           : theme.colorScheme.onSurface,
-                      letterSpacing: -0.2,
+                      letterSpacing: -0.1,
                     ),
                   ),
-                  const SizedBox(height: 6),
-                  // Duration label
+                  const SizedBox(height: 4),
+                  // Duration label (smaller, lighter)
                   Text(
                     '$minutes dakika',
-                    style: theme.textTheme.bodyMedium?.copyWith(
+                    style: theme.textTheme.bodySmall?.copyWith(
                       color: selected
-                          ? theme.colorScheme.onPrimaryContainer.withOpacity(0.7)
-                          : theme.colorScheme.onSurfaceVariant.withOpacity(0.8),
-                      fontWeight: FontWeight.w600,
+                          ? theme.colorScheme.onPrimaryContainer.withOpacity(0.65)
+                          : theme.colorScheme.onSurfaceVariant.withOpacity(0.7),
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 10),
             
-            // Minutes badge
+            // Minutes badge (more compact)
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(10),
                 color: selected
-                    ? theme.colorScheme.primary.withOpacity(0.15)
+                    ? theme.colorScheme.primary.withOpacity(0.12)
                     : theme.colorScheme.surfaceContainerHighest,
               ),
               child: Text(
                 '$minutes dk',
-                style: theme.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w800,
+                style: theme.textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.w700,
                   color: selected
                       ? theme.colorScheme.primary
                       : theme.colorScheme.onSurfaceVariant,
