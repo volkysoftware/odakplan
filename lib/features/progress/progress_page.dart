@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:odakplan/app/state/history_state.dart';
 import 'package:odakplan/app/state/streak_state.dart';
 import 'state/progress_period_controller.dart';
+import 'state/focus_score_provider.dart';
 
 class ProgressPage extends ConsumerWidget {
   const ProgressPage({super.key});
@@ -106,6 +107,11 @@ class ProgressPage extends ConsumerWidget {
           ),
 
           const SizedBox(height: 16),
+          // Focus Score Card (Week view required, Month view optional if data exists)
+          if (isWeek || (periodTotal > 0)) ...[
+            _FocusScoreCard(isWeek: isWeek),
+            const SizedBox(height: 16),
+          ],
           _SectionTitle(
             title: 'Grafik',
             subtitle: 'Odak dakikaların ($periodLabel)',
@@ -297,6 +303,112 @@ String _dayBadgeLabelTR(DateTime d, {required bool isToday, required bool isWeek
 }
 
 /* ------------------------ WIDGETS ------------------------ */
+
+class _FocusScoreCard extends ConsumerWidget {
+  final bool isWeek;
+
+  const _FocusScoreCard({required this.isWeek});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final score = isWeek
+        ? ref.watch(weeklyFocusScoreProvider)
+        : ref.watch(monthlyFocusScoreProvider);
+    
+    final minutesMap = ref.watch(dailyMinutesMapProvider);
+    final periodState = ref.watch(progressPeriodProvider);
+    
+    // Check if there's any data for this period
+    final days = isWeek
+        ? _getWeekDays(periodState.anchorDate)
+        : _getMonthDays(periodState.anchorDate);
+    final hasData = days.any((d) => _minutesForDay(minutesMap, d) > 0);
+    
+    final periodLabel = isWeek ? 'Bu hafta' : 'Bu ay';
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: _cardDecoration(theme),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primaryContainer,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Icon(
+                  Icons.trending_up_rounded,
+                  color: theme.colorScheme.onPrimaryContainer,
+                  size: 28,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Odak Skoru',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      periodLabel,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (hasData)
+                Text(
+                  '$score',
+                  style: theme.textTheme.displayMedium?.copyWith(
+                    fontWeight: FontWeight.w900,
+                    color: theme.colorScheme.primary,
+                    height: 1.0,
+                  ),
+                )
+              else
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      '0',
+                      style: theme.textTheme.displayMedium?.copyWith(
+                        fontWeight: FontWeight.w900,
+                        color: theme.colorScheme.onSurfaceVariant.withOpacity(0.5),
+                        height: 1.0,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Henüz veri yok',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
 
 class _PeriodSelector extends StatelessWidget {
   final ProgressPeriod selectedPeriod;
