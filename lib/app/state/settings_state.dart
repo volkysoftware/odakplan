@@ -116,3 +116,36 @@ class SoftThemeNotifier extends StateNotifier<bool> {
     _box.put(_key, value);
   }
 }
+
+/// Provider to check if welcome overlay should be shown today
+final shouldShowWelcomeTodayProvider = Provider<bool>((ref) {
+  final box = Hive.box<dynamic>('op_settings');
+  final lastShownDate = box.get('welcomeLastShownDate') as String?;
+  
+  // Get today's date string (YYYY-MM-DD)
+  final now = DateTime.now();
+  final todayDate = '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+  
+  // Show if never shown before or if last shown date is different from today
+  return lastShownDate != todayDate;
+});
+
+/// Notifier to mark welcome as shown today
+final welcomeShownNotifierProvider =
+    StateNotifierProvider<WelcomeShownNotifier, void>((ref) {
+  return WelcomeShownNotifier();
+});
+
+class WelcomeShownNotifier extends StateNotifier<void> {
+  WelcomeShownNotifier() : super(null);
+
+  final Box<dynamic> _box = Hive.box<dynamic>('op_settings');
+  static const _key = 'welcomeLastShownDate';
+
+  void markShownToday() {
+    final now = DateTime.now();
+    final todayDate = '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+    _box.put(_key, todayDate);
+    state = null; // Trigger rebuild
+  }
+}

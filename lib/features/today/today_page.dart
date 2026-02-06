@@ -9,13 +9,42 @@ import 'package:odakplan/app/state/selection_state.dart';
 import 'state/today_plan_notifier.dart';
 import 'widgets/plan_item_card.dart';
 import 'widgets/target_progress_indicator.dart';
+import 'widgets/daily_welcome_overlay.dart';
 import 'models/activity_plan.dart';
 
-class TodayPage extends ConsumerWidget {
+class TodayPage extends ConsumerStatefulWidget {
   const TodayPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<TodayPage> createState() => _TodayPageState();
+}
+
+class _TodayPageState extends ConsumerState<TodayPage> {
+  bool _welcomeChecked = false;
+
+  @override
+  Widget build(BuildContext context) {
+    // Check and show welcome overlay after first frame
+    if (!_welcomeChecked) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        final shouldShow = ref.read(shouldShowWelcomeTodayProvider);
+        if (shouldShow) {
+          showDialog(
+            context: context,
+            barrierColor: Colors.transparent,
+            barrierDismissible: false,
+            builder: (context) => const DailyWelcomeOverlay(),
+          ).then((_) {
+            // Mark as shown after overlay is dismissed
+            if (mounted) {
+              ref.read(welcomeShownNotifierProvider.notifier).markShownToday();
+            }
+          });
+        }
+        _welcomeChecked = true;
+      });
+    }
     final theme = Theme.of(context);
 
     final target = ref.watch(dailyTargetProvider);
