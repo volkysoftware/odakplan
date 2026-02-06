@@ -8,9 +8,6 @@ import 'package:odakplan/app/state/settings_state.dart';
 
 import 'state/focus_timer_controller.dart';
 import 'widgets/session_complete_sheet.dart';
-// Add a provider that reads the "dailyTarget" value from Hive and falls back to 120 if not found.
-// No need for custom dailyTargetProvider here, read from the global one.
-// (Delete this entire section. Use the app/state/settings_state.dart provider.)
 
 class FocusPage extends ConsumerStatefulWidget {
   const FocusPage({super.key});
@@ -150,7 +147,7 @@ class _FocusPageState extends ConsumerState<FocusPage> {
 
     final workedMinutes =
         timer.isBreak ? 0 : (timer.sessionTotalSeconds / 60).round();
-    const dailyTarget = 120;
+    final dailyTarget = ref.read(dailyTargetProvider);
 
     final mapBefore = ref.read(dailyMinutesMapProvider);
     final todayBefore = _getTodayTotalMinutes(mapBefore);

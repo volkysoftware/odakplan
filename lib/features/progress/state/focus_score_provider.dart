@@ -97,7 +97,7 @@ int _computeWeeklyScore({
   required int streakDays,
   required int dailyTarget,
 }) {
-  final target = dailyTarget > 0 ? dailyTarget : 120; // Fallback to 120
+  final target = dailyTarget; // Provider guarantees valid value (defaults to 120)
   final weekDays = _getWeekDays(anchorDate);
   
   // Calculate weekly minutes
@@ -132,7 +132,7 @@ int _computeMonthlyScore({
   required int streakDays,
   required int dailyTarget,
 }) {
-  final target = dailyTarget > 0 ? dailyTarget : 120; // Fallback to 120
+  final target = dailyTarget; // Provider guarantees valid value (defaults to 120)
   final monthDays = _getMonthDays(anchorDate);
   final daysInMonth = monthDays.length;
   

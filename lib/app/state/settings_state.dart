@@ -7,7 +7,7 @@ final dailyTargetProvider =
 });
 
 class DailyTargetNotifier extends StateNotifier<int> {
-  DailyTargetNotifier() : super(60) {
+  DailyTargetNotifier() : super(120) {
     _load();
   }
 
@@ -15,7 +15,7 @@ class DailyTargetNotifier extends StateNotifier<int> {
   static const _key = 'dailyTarget';
 
   void _load() {
-    state = _box.get(_key, defaultValue: 60) ?? 60;
+    state = _box.get(_key, defaultValue: 120) ?? 120;
   }
 
   void setTarget(int value) {
