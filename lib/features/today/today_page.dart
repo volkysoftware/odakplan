@@ -508,6 +508,7 @@ class _HeaderCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     final left = target <= 0 ? 0 : (target - todayTotal);
     final leftText = target <= 0
@@ -516,116 +517,120 @@ class _HeaderCard extends StatelessWidget {
             ? 'Hedef tamam 🎉'
             : '$left dk kaldı';
 
+    // Main headline: show "72 dk" or "72 / 120 dk"
+    final headlineText = target <= 0
+        ? '$todayTotal dk'
+        : '$todayTotal / $target dk';
+
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: theme.colorScheme.outlineVariant),
-      ),
-      child: Row(
-        children: [
-          _ProgressRing(
-            progress: progress,
-            centerTop: '$todayTotal',
-            centerBottom: 'dk',
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Bugün hedefin',
-                  style: theme.textTheme.labelLarge?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  target <= 0 ? '—' : '$target dk',
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  leftText,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: onEditTarget,
-                        icon: const Icon(Icons.edit_rounded),
-                        label: const Text('Hedef'),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: FilledButton.icon(
-                        onPressed: onStartFocus,
-                        icon: const Icon(Icons.timer_rounded),
-                        label: const Text('Odak'),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: theme.colorScheme.outlineVariant.withOpacity(0.5),
+          width: 1,
+        ),
+        // Subtle gradient edge effect
+        boxShadow: [
+          BoxShadow(
+            color: theme.colorScheme.primary.withOpacity(isDark ? 0.15 : 0.08),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+            spreadRadius: 0,
           ),
         ],
       ),
-    );
-  }
-}
-
-class _ProgressRing extends StatelessWidget {
-  final double progress;
-  final String centerTop;
-  final String centerBottom;
-
-  const _ProgressRing({
-    required this.progress,
-    required this.centerTop,
-    required this.centerBottom,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return SizedBox(
-      width: 86,
-      height: 86,
-      child: Stack(
-        alignment: Alignment.center,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CircularProgressIndicator(
-            value: progress,
-            strokeWidth: 10,
-            backgroundColor: theme.colorScheme.surfaceContainerHighest,
+          // Label
+          Text(
+            'Bugün Hedefin',
+            style: theme.textTheme.labelLarge?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: theme.colorScheme.onSurfaceVariant.withOpacity(0.7),
+              letterSpacing: 0.3,
+            ),
           ),
-          Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                centerTop,
-                style: theme.textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w900,
+          const SizedBox(height: 12),
+          
+          // Large headline number
+          Text(
+            headlineText,
+            style: TextStyle(
+              fontSize: 48,
+              fontWeight: FontWeight.w300,
+              height: 1.0,
+              color: theme.colorScheme.onSurface,
+              fontFeatures: const [
+                FontFeature('tnum'), // Tabular figures
+              ],
+              letterSpacing: -1.0,
+            ),
+          ),
+          const SizedBox(height: 16),
+          
+          // Minimal thin progress bar
+          ClipRRect(
+            borderRadius: BorderRadius.circular(2),
+            child: Container(
+              height: 3,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(2),
+              ),
+              child: FractionallySizedBox(
+                alignment: Alignment.centerLeft,
+                widthFactor: progress.clamp(0.0, 1.0),
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        theme.colorScheme.primary,
+                        theme.colorScheme.primary.withOpacity(0.8),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
                 ),
               ),
-              Text(
-                centerBottom,
-                style: theme.textTheme.labelMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                  fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 12),
+          
+          // Status text
+          Text(
+            leftText,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant.withOpacity(0.8),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 20),
+          
+          // Action buttons
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: onEditTarget,
+                  icon: const Icon(Icons.edit_rounded, size: 18),
+                  label: const Text('Hedef'),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: FilledButton.icon(
+                  onPressed: onStartFocus,
+                  icon: const Icon(Icons.timer_rounded, size: 18),
+                  label: const Text('Odak'),
+                  style: FilledButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
                 ),
               ),
             ],
@@ -635,6 +640,7 @@ class _ProgressRing extends StatelessWidget {
     );
   }
 }
+
 
 class _EmptyPlans extends StatelessWidget {
   final VoidCallback onAdd;
