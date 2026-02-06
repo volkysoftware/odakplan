@@ -296,6 +296,8 @@ class _SettingsPageState extends State<SettingsPage> {
             _sectionTitle(context, 'Odak'),
             const SizedBox(height: 8),
             _BreakDurationCard(),
+            const SizedBox(height: 8),
+            _FocusRitualCard(),
 
             const SizedBox(height: 16),
             _sectionTitle(context, 'Veri ve Güvenlik'),
@@ -865,6 +867,27 @@ class _BreakDurationPickerSheet extends StatelessWidget {
             const SizedBox(height: 8),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _FocusRitualCard extends ConsumerWidget {
+  const _FocusRitualCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final ritualEnabled = ref.watch(focusRitualEnabledProvider);
+
+    return _SettingsCard(
+      child: _SettingsSwitchTile(
+        icon: Icons.self_improvement_outlined,
+        title: 'Odak Öncesi Ritüel',
+        subtitle: 'Başlatmadan önce kısa hazırlık ekranı',
+        value: ritualEnabled,
+        onChanged: (value) {
+          ref.read(focusRitualEnabledProvider.notifier).setEnabled(value);
+        },
       ),
     );
   }

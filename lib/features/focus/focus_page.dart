@@ -8,6 +8,7 @@ import 'package:odakplan/app/state/settings_state.dart';
 
 import 'state/focus_timer_controller.dart';
 import 'widgets/session_complete_sheet.dart';
+import 'widgets/focus_start_ritual.dart';
 
 class FocusPage extends ConsumerStatefulWidget {
   const FocusPage({super.key});
@@ -202,6 +203,42 @@ class _FocusPageState extends ConsumerState<FocusPage> {
       await ctrl.start(); // ✅ controller ongoing + finish schedule yönetir
     } else {
       await ctrl.applyMode(isBreak: !timer.isBreak);
+    }
+  }
+
+  Future<void> _handleStart(
+    BuildContext context,
+    WidgetRef ref,
+    FocusTimerState timer,
+    FocusTimerController ctrl,
+  ) async {
+    // Only show ritual for work sessions (not breaks) and if enabled
+    final ritualEnabled = ref.read(focusRitualEnabledProvider);
+    final shouldShowRitual = ritualEnabled && !timer.isBreak;
+
+    if (shouldShowRitual) {
+      // Show ritual overlay
+      await showDialog(
+        context: context,
+        barrierColor: Colors.black,
+        barrierDismissible: false,
+        useSafeArea: false,
+        builder: (context) => FocusStartRitual(
+          onComplete: () {
+            Navigator.of(context).pop();
+            // Start timer after ritual completes
+            ctrl.start();
+          },
+          onSkip: () {
+            Navigator.of(context).pop();
+            // Start timer immediately when skipped
+            ctrl.start();
+          },
+        ),
+      );
+    } else {
+      // Start immediately without ritual
+      await ctrl.start();
     }
   }
 
@@ -427,7 +464,7 @@ class _FocusPageState extends ConsumerState<FocusPage> {
                           if (timer.isRunning) {
                             await ctrl.pause();
                           } else {
-                            await ctrl.start();
+                            await _handleStart(context, ref, timer, ctrl);
                           }
                         },
                         icon: Icon(timer.isRunning

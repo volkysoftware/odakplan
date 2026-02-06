@@ -43,6 +43,11 @@ class FocusFullscreenPage extends ConsumerWidget {
             // Start timer after ritual completes
             ctrl.start();
           },
+          onSkip: () {
+            Navigator.of(context).pop();
+            // Start timer immediately when skipped
+            ctrl.start();
+          },
         ),
       );
     } else {

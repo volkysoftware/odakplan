@@ -7,9 +7,11 @@ class FocusStartRitual extends StatefulWidget {
   const FocusStartRitual({
     super.key,
     required this.onComplete,
+    this.onSkip,
   });
 
   final VoidCallback onComplete;
+  final VoidCallback? onSkip;
 
   @override
   State<FocusStartRitual> createState() => _FocusStartRitualState();
@@ -99,6 +101,16 @@ class _FocusStartRitualState extends State<FocusStartRitual>
     super.dispose();
   }
 
+  void _skip() {
+    _sequenceTimer?.cancel();
+    _controller.stop();
+    if (widget.onSkip != null) {
+      widget.onSkip!();
+    } else {
+      widget.onComplete();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -108,30 +120,44 @@ class _FocusStartRitualState extends State<FocusStartRitual>
       color: isDark
           ? const Color(0xFF0A0A0A)
           : const Color(0xFF1A1A1A),
-      child: Container(
-        width: double.infinity,
-        height: double.infinity,
-        child: Center(
-          child: FadeTransition(
-            opacity: _fadeAnimation,
-            child: SlideTransition(
-              position: _slideAnimation,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 32),
-                child: Text(
-                  _messages[_currentIndex],
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.headlineMedium?.copyWith(
-                    color: Colors.white.withOpacity(0.9),
-                    fontWeight: FontWeight.w300,
-                    letterSpacing: 0.5,
-                    height: 1.4,
+      child: Stack(
+        children: [
+          Center(
+            child: FadeTransition(
+              opacity: _fadeAnimation,
+              child: SlideTransition(
+                position: _slideAnimation,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 32),
+                  child: Text(
+                    _messages[_currentIndex],
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.headlineMedium?.copyWith(
+                      color: Colors.white.withOpacity(0.9),
+                      fontWeight: FontWeight.w300,
+                      letterSpacing: 0.5,
+                      height: 1.4,
+                    ),
                   ),
                 ),
               ),
             ),
           ),
-        ),
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 16,
+            right: 16,
+            child: TextButton(
+              onPressed: _skip,
+              child: Text(
+                'Geç',
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.7),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
