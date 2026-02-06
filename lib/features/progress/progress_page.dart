@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:odakplan/app/state/history_state.dart';
 import 'package:odakplan/app/state/streak_state.dart';
+import 'state/progress_period_controller.dart';
 
 class ProgressPage extends ConsumerWidget {
   const ProgressPage({super.key});
@@ -15,14 +16,21 @@ class ProgressPage extends ConsumerWidget {
     // Map<String, int>  key: 'yyyy-MM-dd'
     final minutesMap = ref.watch(dailyMinutesMapProvider);
     final streak = ref.watch(streakProvider);
+    final periodState = ref.watch(progressPeriodProvider);
 
     final now = DateTime.now();
-    final days = _lastNDays(now, 7); // eski -> yeni (7 gün)
+    final days = _getDaysForPeriod(periodState.period, periodState.anchorDate);
     final series = days.map((d) => _minutesForDay(minutesMap, d)).toList(growable: false);
 
-    final todayMinutes = series.isNotEmpty ? series.last : 0;
-    final weekTotal = series.fold<int>(0, (a, b) => a + b);
+    final todayMinutes = _isSameDay(now, days.isNotEmpty ? days.last : now) && series.isNotEmpty
+        ? series.last
+        : 0;
+    final periodTotal = series.fold<int>(0, (a, b) => a + b);
     final bestDay = series.isEmpty ? 0 : series.reduce((a, b) => a > b ? a : b);
+
+    final isWeek = periodState.period == ProgressPeriod.week;
+    final periodLabel = isWeek ? 'Hafta' : 'Ay';
+    final periodSubtitle = isWeek ? 'Son 7 gün performansın' : 'Bu ay performansın';
 
     return Scaffold(
       appBar: AppBar(
@@ -32,9 +40,17 @@ class ProgressPage extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
         children: [
+          // Period selector
+          _PeriodSelector(
+            selectedPeriod: periodState.period,
+            onPeriodChanged: (period) {
+              ref.read(progressPeriodProvider.notifier).setPeriod(period);
+            },
+          ),
+          const SizedBox(height: 16),
           _SectionTitle(
             title: 'Özet',
-            subtitle: 'Son 7 gün performansın',
+            subtitle: periodSubtitle,
           ),
           const SizedBox(height: 10),
 
@@ -52,9 +68,9 @@ class ProgressPage extends ConsumerWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: _KpiCard(
-                  icon: Icons.calendar_view_week_rounded,
-                  title: 'Son 7 Gün',
-                  value: '$weekTotal dk',
+                  icon: isWeek ? Icons.calendar_view_week_rounded : Icons.calendar_month_rounded,
+                  title: isWeek ? 'Bu Hafta' : 'Bu Ay',
+                  value: '$periodTotal dk',
                   tone: _KpiTone.neutral,
                 ),
               ),
@@ -81,7 +97,9 @@ class ProgressPage extends ConsumerWidget {
                   title: 'En iyi gün',
                   value: '$bestDay dk',
                   tone: _KpiTone.neutral,
-                  footer: bestDay == 0 ? 'Henüz kayıt yok' : 'Son 7 günde',
+                  footer: bestDay == 0
+                      ? 'Henüz kayıt yok'
+                      : (isWeek ? 'Bu haftada' : 'Bu ayda'),
                 ),
               ),
             ],
@@ -90,7 +108,7 @@ class ProgressPage extends ConsumerWidget {
           const SizedBox(height: 16),
           _SectionTitle(
             title: 'Grafik',
-            subtitle: 'Odak dakikaların (7 gün)',
+            subtitle: 'Odak dakikaların ($periodLabel)',
           ),
           const SizedBox(height: 10),
 
@@ -110,12 +128,12 @@ class ProgressPage extends ConsumerWidget {
                   height: 180,
                   child: _BarChart(
                     values: series,
-                    labels: days.map(_shortDayLabelTR).toList(),
+                    labels: days.map((d) => _getDayLabel(d, isWeek)).toList(),
                   ),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  _tipText(series),
+                  _tipText(series, isWeek),
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                     fontWeight: FontWeight.w600,
@@ -128,7 +146,7 @@ class ProgressPage extends ConsumerWidget {
           const SizedBox(height: 16),
           _SectionTitle(
             title: 'Gün Gün',
-            subtitle: 'Son 7 gün detay',
+            subtitle: isWeek ? 'Bu hafta detay' : 'Bu ay detay',
           ),
           const SizedBox(height: 10),
 
@@ -144,7 +162,7 @@ class ProgressPage extends ConsumerWidget {
                 decoration: _cardDecoration(theme),
                 child: ListTile(
                   leading: _DayBadge(
-                    label: _dayBadgeLabelTR(d, isToday: isToday),
+                    label: _dayBadgeLabelTR(d, isToday: isToday, isWeek: isWeek),
                     tone: isToday ? _BadgeTone.primary : _BadgeTone.neutral,
                   ),
                   title: Text(
@@ -173,12 +191,43 @@ class ProgressPage extends ConsumerWidget {
 
 /* ------------------------ DATA HELPERS ------------------------ */
 
-List<DateTime> _lastNDays(DateTime now, int n) {
-  final today = DateTime(now.year, now.month, now.day);
-  return List.generate(n, (i) {
-    final d = today.subtract(Duration(days: (n - 1) - i));
-    return d;
-  });
+List<DateTime> _getDaysForPeriod(ProgressPeriod period, DateTime anchorDate) {
+  if (period == ProgressPeriod.week) {
+    return _getWeekDays(anchorDate);
+  } else {
+    return _getMonthDays(anchorDate);
+  }
+}
+
+DateTime _startOfWeek(DateTime date) {
+  final d = DateTime(date.year, date.month, date.day);
+  final weekday = d.weekday; // 1 = Monday, 7 = Sunday
+  return d.subtract(Duration(days: weekday - 1));
+}
+
+List<DateTime> _getWeekDays(DateTime anchorDate) {
+  final start = _startOfWeek(anchorDate);
+  return List.generate(7, (i) => start.add(Duration(days: i)));
+}
+
+DateTime _startOfMonth(DateTime date) {
+  return DateTime(date.year, date.month, 1);
+}
+
+DateTime _endOfMonth(DateTime date) {
+  return DateTime(date.year, date.month + 1, 0);
+}
+
+List<DateTime> _getMonthDays(DateTime anchorDate) {
+  final start = _startOfMonth(anchorDate);
+  final end = _endOfMonth(anchorDate);
+  final days = <DateTime>[];
+  var current = start;
+  while (current.isBefore(end) || current.isAtSameMomentAs(end)) {
+    days.add(current);
+    current = current.add(const Duration(days: 1));
+  }
+  return days;
 }
 
 int _minutesForDay(Map<String, int> map, DateTime d) {
@@ -202,17 +251,23 @@ BoxDecoration _cardDecoration(ThemeData theme) {
   );
 }
 
-String _tipText(List<int> values) {
+String _tipText(List<int> values, bool isWeek) {
   final total = values.fold<int>(0, (a, b) => a + b);
   if (total == 0) return 'İpucu: İlk oturumunu başlat, burada grafik hemen dolacak.';
   final best = values.reduce((a, b) => a > b ? a : b);
-  return 'İpucu: Bugün 10 dk eklesen, haftalık toplamın ${total + 10} dk olur. En iyi günün: $best dk';
+  final periodLabel = isWeek ? 'haftalık' : 'aylık';
+  return 'İpucu: Bugün 10 dk eklesen, $periodLabel toplamın ${total + 10} dk olur. En iyi günün: $best dk';
 }
 
-String _shortDayLabelTR(DateTime d) {
-  const names = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];
-  final idx = (d.weekday - 1).clamp(0, 6);
-  return names[idx];
+String _getDayLabel(DateTime d, bool isWeek) {
+  if (isWeek) {
+    const names = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];
+    final idx = (d.weekday - 1).clamp(0, 6);
+    return names[idx];
+  } else {
+    // For month view, show day number
+    return d.day.toString();
+  }
 }
 
 String _fullDayLabelTR(DateTime d, {required bool isToday}) {
@@ -230,12 +285,112 @@ String _fullDayLabelTR(DateTime d, {required bool isToday}) {
   return isToday ? 'Bugün • $date' : '$name • $date';
 }
 
-String _dayBadgeLabelTR(DateTime d, {required bool isToday}) {
+String _dayBadgeLabelTR(DateTime d, {required bool isToday, required bool isWeek}) {
   if (isToday) return 'BUGÜN';
-  return _shortDayLabelTR(d).toUpperCase();
+  if (isWeek) {
+    const names = ['PZT', 'SAL', 'ÇAR', 'PER', 'CUM', 'CMT', 'PAZ'];
+    final idx = (d.weekday - 1).clamp(0, 6);
+    return names[idx];
+  } else {
+    return d.day.toString();
+  }
 }
 
 /* ------------------------ WIDGETS ------------------------ */
+
+class _PeriodSelector extends StatelessWidget {
+  final ProgressPeriod selectedPeriod;
+  final ValueChanged<ProgressPeriod> onPeriodChanged;
+
+  const _PeriodSelector({
+    required this.selectedPeriod,
+    required this.onPeriodChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isWeek = selectedPeriod == ProgressPeriod.week;
+
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: theme.colorScheme.outlineVariant),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _PeriodButton(
+              label: 'Hafta',
+              isSelected: isWeek,
+              onTap: () => onPeriodChanged(ProgressPeriod.week),
+            ),
+          ),
+          Expanded(
+            child: _PeriodButton(
+              label: 'Ay',
+              isSelected: !isWeek,
+              onTap: () => onPeriodChanged(ProgressPeriod.month),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PeriodButton extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _PeriodButton({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? theme.colorScheme.surface
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: theme.colorScheme.shadow.withOpacity(0.1),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
+        ),
+        child: Center(
+          child: Text(
+            label,
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
+              color: isSelected
+                  ? theme.colorScheme.onSurface
+                  : theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 class _SectionTitle extends StatelessWidget {
   final String title;
