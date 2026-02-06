@@ -8,6 +8,7 @@ import 'package:odakplan/app/state/selection_state.dart';
 
 import 'state/today_plan_notifier.dart';
 import 'widgets/plan_item_card.dart';
+import 'widgets/target_progress_indicator.dart';
 import 'models/activity_plan.dart';
 
 class TodayPage extends ConsumerWidget {
@@ -574,20 +575,80 @@ class _HeaderCard extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               
-              // Large headline number (clear focal point)
-              Text(
-                headlineText,
-                style: TextStyle(
-                  fontSize: 56,
-                  fontWeight: FontWeight.w400,
-                  height: 1.0,
-                  color: theme.colorScheme.onSurface,
-                  fontFeatures: const [
-                    FontFeature('tnum'), // Tabular figures
-                  ],
-                  letterSpacing: -1.5,
-                ),
-              ),
+              // Large headline number (clear focal point) with target indicator
+              target <= 0
+                  ? Text(
+                      headlineText,
+                      style: TextStyle(
+                        fontSize: 56,
+                        fontWeight: FontWeight.w400,
+                        height: 1.0,
+                        color: theme.colorScheme.onSurface,
+                        fontFeatures: const [
+                          FontFeature('tnum'), // Tabular figures
+                        ],
+                        letterSpacing: -1.5,
+                      ),
+                    )
+                  : Row(
+                      crossAxisAlignment: CrossAxisAlignment.baseline,
+                      textBaseline: TextBaseline.alphabetic,
+                      children: [
+                        Text(
+                          '$todayTotal / ',
+                          style: TextStyle(
+                            fontSize: 56,
+                            fontWeight: FontWeight.w400,
+                            height: 1.0,
+                            color: theme.colorScheme.onSurface,
+                            fontFeatures: const [
+                              FontFeature('tnum'), // Tabular figures
+                            ],
+                            letterSpacing: -1.5,
+                          ),
+                        ),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.baseline,
+                          textBaseline: TextBaseline.alphabetic,
+                          children: [
+                            Text(
+                              '$target',
+                              style: TextStyle(
+                                fontSize: 56,
+                                fontWeight: FontWeight.w400,
+                                height: 1.0,
+                                color: theme.colorScheme.onSurface,
+                                fontFeatures: const [
+                                  FontFeature('tnum'), // Tabular figures
+                                ],
+                                letterSpacing: -1.5,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 4),
+                              child: TargetProgressIndicator(
+                                progress: progress,
+                                size: 18.0,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Text(
+                          ' dk',
+                          style: TextStyle(
+                            fontSize: 56,
+                            fontWeight: FontWeight.w400,
+                            height: 1.0,
+                            color: theme.colorScheme.onSurface,
+                            fontFeatures: const [
+                              FontFeature('tnum'), // Tabular figures
+                            ],
+                            letterSpacing: -1.5,
+                          ),
+                        ),
+                      ],
+                    ),
               const SizedBox(height: 20),
               
               // Ultra-minimal progress bar (thinner, refined)

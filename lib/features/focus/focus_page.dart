@@ -19,13 +19,30 @@ class FocusPage extends ConsumerStatefulWidget {
   ConsumerState<FocusPage> createState() => _FocusPageState();
 }
 
-class _FocusPageState extends ConsumerState<FocusPage> {
+class _FocusPageState extends ConsumerState<FocusPage> with SingleTickerProviderStateMixin {
   late final _planMinutesSub;
   late final _timerFinishSub;
+  late final AnimationController _breathingController;
+  late final Animation<double> _breathingAnimation;
 
   @override
   void initState() {
     super.initState();
+    
+    // Breathing animation controller (slow, calm pulse)
+    _breathingController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 4000), // 4 seconds per cycle
+    );
+    
+    // Scale animation: 1.00 -> 1.03 -> 1.00 (breathing effect)
+    _breathingAnimation = Tween<double>(
+      begin: 1.00,
+      end: 1.03,
+    ).animate(CurvedAnimation(
+      parent: _breathingController,
+      curve: Curves.easeInOut,
+    ));
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
@@ -82,6 +99,7 @@ class _FocusPageState extends ConsumerState<FocusPage> {
   void dispose() {
     _planMinutesSub?.close();
     _timerFinishSub?.close();
+    _breathingController.dispose();
     super.dispose();
   }
 
@@ -297,6 +315,18 @@ class _FocusPageState extends ConsumerState<FocusPage> {
     final value = timer.sessionTotalSeconds <= 0
         ? 0.0
         : (1 - (timer.remainingSeconds / timer.sessionTotalSeconds)).clamp(0.0, 1.0);
+    
+    // Control breathing animation based on timer state
+    if (timer.isRunning) {
+      if (!_breathingController.isAnimating) {
+        _breathingController.repeat(reverse: true);
+      }
+    } else {
+      if (_breathingController.isAnimating) {
+        _breathingController.stop();
+        _breathingController.reset();
+      }
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -460,43 +490,64 @@ class _FocusPageState extends ConsumerState<FocusPage> {
                 ),
                 const SizedBox(height: 12),
                 SizedBox(
-                  width: 220,
-                  height: 220,
+                  width: 280,
+                  height: 280,
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
-                      CircularProgressIndicator(value: value, strokeWidth: 14),
-                      Container(
-                        width: 180,
-                        height: 180,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(999),
-                          color: theme.colorScheme.surfaceContainerHighest,
-                          border:
-                              Border.all(color: theme.colorScheme.outlineVariant),
-                        ),
-                        child: Center(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                _format(timer.remainingSeconds),
-                                style: theme.textTheme.displaySmall?.copyWith(
-                                  fontWeight: FontWeight.w900,
-                                  letterSpacing: 1,
+                      // Subtle circular progress indicator
+                      CircularProgressIndicator(
+                        value: value,
+                        strokeWidth: 12,
+                        backgroundColor: theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
+                      ),
+                      // Timer display with breathing effect
+                      AnimatedBuilder(
+                        animation: _breathingAnimation,
+                        builder: (context, child) {
+                          return Transform.scale(
+                            scale: timer.isRunning ? _breathingAnimation.value : 1.0,
+                            child: Container(
+                              width: 240,
+                              height: 240,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(999),
+                                color: theme.colorScheme.surfaceContainerHighest,
+                                border: Border.all(
+                                  color: theme.colorScheme.outlineVariant.withOpacity(0.3),
                                 ),
                               ),
-                              const SizedBox(height: 6),
-                              Text(
-                                timer.isBreak ? 'Mola süresi' : 'Odak süresi',
-                                style: theme.textTheme.labelLarge?.copyWith(
-                                  color: theme.colorScheme.onSurfaceVariant,
-                                  fontWeight: FontWeight.w700,
+                              child: Center(
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      _format(timer.remainingSeconds),
+                                      style: TextStyle(
+                                        fontSize: 64,
+                                        fontWeight: FontWeight.w300,
+                                        height: 1.0,
+                                        letterSpacing: 2,
+                                        color: theme.colorScheme.onSurface,
+                                        fontFeatures: const [
+                                          FontFeature('tnum'), // Tabular figures
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      timer.isBreak ? 'Mola süresi' : 'Odak süresi',
+                                      style: theme.textTheme.labelLarge?.copyWith(
+                                        color: theme.colorScheme.onSurfaceVariant.withOpacity(0.7),
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                            ],
-                          ),
-                        ),
+                            ),
+                          );
+                        },
                       ),
                     ],
                   ),
